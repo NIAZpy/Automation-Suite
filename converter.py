@@ -57,38 +57,43 @@ def convert_data(input_df):
 
         st.success(f"✅ PDF parsed: {len(df_clean)} orders, {df2['協力企業'].nunique()} unique partners.")
 
-    elif has_dates:
-        # --- কেস ২: Excel '+29' ফরম্যাট (এখন যেকোনো তারিখ চলবে) ---
-        # '総数' কলাম থাকলে ড্রপ করুন
+        elif has_dates:
+        # --- কেস ২: Excel '+29' ফরম্যাট ---
         if '総数' in df.columns:
             df = df.drop(columns=['総数'])
             
-        # '品番' কলামটি আইডি হিসেবে রাখুন
         if '品番' not in df.columns:
             st.error("❌ Excel-এ '品番' কলাম পাওয়া যায়নি।")
             return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
-        # Wide → Long ফরম্যাটে রূপান্তর (শুধু যেগুলো তারিখের কলাম)
+        # Wide → Long ফরম্যাটে রূপান্তর
         df_melted = df.melt(
             id_vars=['品番'], 
-            value_vars=date_cols,  # ← ডায়নামিক: যত রকম তারিখের কলাম আছে সব নেবে
+            value_vars=date_cols,
             var_name='完成日', 
             value_name='数量'
         )
         df_melted = df_melted[df_melted['数量'] > 0].dropna()
+        
+        # 📌 সমস্যা: এখানে বছর ১৯০০ হয়ে যায়
         df_melted['完成日'] = pd.to_datetime(df_melted['完成日'], format='%m/%d')
+        
+        # ✅ সমাধান: ১৯০০ সালকে ২০২৬ সালে পরিবর্তন করুন
+        # FIX: যেহেতু Excel-এ বছর নেই, তাই সব তারিখকে 2026 সালের করে দিচ্ছি
+        df_melted['完成日'] = df_melted['完成日'].apply(lambda x: x.replace(year=2026))
+        
         df_melted.columns = ['品番', '完成日', '数量']
 
-        # --- আউটপুট ১: 材料別発注リスト ---
+        # --- আউটপুট ১ ---
         df1 = df_melted.groupby(['品番', '完成日']).agg({'数量': 'sum'}).reset_index()
         df1.columns = ['品番', '完成日', '数量']
 
-        # --- আউটপুট ২: 協力企業納入予定表 (Excel-এ '納入先' নেই, তাই '品番' কে প্লেসহোল্ডার ধরা) ---
+        # --- আউটপুট ২ ---
         df2 = df_melted.groupby(['品番', '完成日']).agg({'数量': 'sum'}).reset_index()
         df2.columns = ['協力企業(品番)', '完成日', '数量']
         st.warning("⚠️ Excel-এ '納入先' কলাম নেই। '品番' কে সহযোগী প্রতিষ্ঠানের জায়গায় দেখানো হচ্ছে।")
 
-        # --- আউটপুট ৩: 社内プレス入荷予定表 ---
+        # --- আউটপুট ৩ ---
         df3 = df_melted.groupby(['完成日']).agg({
             '品番': lambda x: ', '.join(x.unique()),
             '数量': 'sum'
@@ -97,7 +102,6 @@ def convert_data(input_df):
         df3.insert(0, 'プレス/シフト', '全プレス(Excel)')
 
         st.success(f"✅ Excel processed! Total rows: {len(df_melted)}")
-
     else:
         st.error("❌ Unrecognized data format. Please upload a PDF with '納入先' or an Excel sheet with '品番' and date columns (like 07/13).")
         return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
