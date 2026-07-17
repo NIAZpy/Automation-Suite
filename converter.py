@@ -103,12 +103,49 @@ def convert_data(input_df):
         df3.insert(0, 'プレス/シフト', '全プレス(Excel)')
 
     else:
-        st.info("ℹ️ '+29' format not detected. Trying flexible Excel processing...")
+    st.info("ℹ️ '+29' format not detected. Trying flexible Excel processing...")
+
+    try:
+        # Identify 品番 column
+        id_col = None
+        for c in df.columns:
+            if '品番' in c:
+                id_col = c
+                break
+
+        if id_col is None:
+            id_col = df.columns[0]   # fallback
+
+        # All other columns treated as dates
+        value_cols = [c for c in df.columns if c != id_col]
+
+        # Melt
+        df_melted = df.melt(id_vars=[id_col], value_vars=value_cols,
+                            var_name='完成日', value_name='数量')
+
+        # Remove zero / NaN
+        df_melted = df_melted[df_melted['数量'] > 0].dropna()
+
+        # SAFE date parser (Cloud + Local)
+        df_melted['完成日'] = pd.to_datetime(df_melted['完成日'], errors='coerce')
+        df_melted = df_melted.dropna(subset=['完成日'])
+
+        # --- Output 1 ---
+        df1 = df_melted.groupby([id_col, '完成日']).agg({'数量': 'sum'}).reset_index()
+        df1.columns = ['品番', '完成日', '数量']
+
+        # --- Output 2 ---
+        df2 = df_melted.groupby([id_col, '完成日']).agg({'数量': 'sum'}).reset_index()
+        df2.columns = ['協力企業(品番)', '完成日', '数量']
+
+        # --- Output 3 ---
+        df3 = df_melted.groupby(['完成日']).agg({
+            id_col: lambda x: ', '.join(x.unique()),
+            '数量': 'sum'
+        }).reset_index()
+        df3.columns = ['完成日', '品番(複数)', '数量合計']
+        df3.insert(0, 'プレス/シフト', '全プレス(Excel)')
+
+    except Exception as e:
+        st.error(f"❌ Flexible Excel parsing failed: {e}")
         return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
-
-    # ---------- Format dates for Excel ----------
-    for df_out in [df1, df2, df3]:
-        if '完成日' in df_out.columns:
-            df_out['完成日'] = df_out['完成日'].dt.strftime('%Y-%m-%d')
-
-    return df1, df2, df3
