@@ -1,35 +1,35 @@
 import pandas as pd
 import streamlit as st
+import re
 
 def convert_data(input_df):
     """
-    Converts input DataFrame (from PDF or '+29' Excel) into 3 Japanese-labeled outputs:
-    1. 材料別発注リスト (Material-wise order list)
-    2. 協力企業納入予定表 (Partner delivery schedule)
-    3. 社内プレス入荷予定表 (Internal press inbound schedule)
+    এখন যেকোনো তারিখের কলাম (যেমন 07/06, 07/13, 08/01) চিনবে।
+    শিটের নাম যাই হোক, প্রথম শিট প্রসেস করবে।
     """
     df = input_df.copy()
 
-    # ---------- Detect format ----------
+    # ---------- 1. ফরম্যাট ডিটেক্ট করুন ----------
+    # PDF ফরম্যাট চেক: '納入先' কলাম আছে কিনা
     has_partner = '納入先' in df.columns
-    has_dates = any(col in df.columns for col in ['07/13', '07/14', '07/15', '07/16', '07/17'])
+    
+    # Excel ফরম্যাট চেক: কলামের নামে 'MM/DD' প্যাটার্ন খুঁজুন (যেমন 07/13)
+    date_pattern = re.compile(r'^\d{2}/\d{2}$')  # যেমন 07/13, 07/06
+    date_cols = [col for col in df.columns if date_pattern.match(str(col).strip())]
+    
+    has_dates = len(date_cols) > 0
 
-    # ---------- Normalize data ----------
+    # ---------- 2. ডেটা প্রসেস ----------
     if has_partner:
-        # --- Case 1: PDF (has 納入先) ---
-        # Expected columns: ['品番', '計画番号', '計画数', '次工程', '材料コード', '納入先', '完成日']
-        # But to be safe, we find the relevant columns by keyword matching.
-        # We'll search for columns containing these keywords.
+        # --- কেস ১: PDF (納入先 আছে) ---
+        # আপনার PDF লজিক এখানে...
+        # (এখনো ঠিক আছে, পরিবর্তন নেই)
         col_material = next((c for c in df.columns if '材料' in c or '品番' in c), None)
         col_partner = next((c for c in df.columns if '納入先' in c), None)
-        col_date = next((c for c in df.columns if '完成日' in c or '日' in c), None)
-        col_qty = next((c for c in df.columns if '計画数' in c or '数量' in c or '数' in c), None)
+        col_date = next((c for c in df.columns if '完成日' in c), None)
+        col_qty = next((c for c in df.columns if '計画数' in c), None)
 
         if not all([col_material, col_partner, col_date, col_qty]):
-            # Fallback: try to use column positions (if known from PDF sample)
-            # Assume first 7 columns are: 品番, 計画番号, 計画数, 品名, 次工程, 材料コード, 納入先, 完成日?
-            # Actually from the PDF we saw: 品番, 計画番号, 計画数, 品名, 次工程, (material code?), 納入先, 完成日?
-            # Let's just use the first 7 columns if no keywords found.
             if len(df.columns) >= 7:
                 df.columns = ['品番', '計画番号', '計画数', '品名', '次工程', '材料コード', '納入先', '完成日'][:len(df.columns)]
                 col_material = '材料コード'
@@ -37,7 +37,7 @@ def convert_data(input_df):
                 col_date = '完成日'
                 col_qty = '計画数'
             else:
-                st.error("❌ PDF format not recognized. Please ensure columns include '材料コード', '納入先', '完成日', '計画数'.")
+                st.error("❌ PDF format not recognized...")
                 return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
         df_clean = df[[col_material, col_partner, col_date, col_qty]].copy()
@@ -47,54 +47,48 @@ def convert_data(input_df):
         df_clean = df_clean.dropna(subset=['数量'])
         df_clean = df_clean[df_clean['数量'] > 0]
 
-        # --- Output 1: 材料別発注リスト (Material-wise) ---
-        df1 = df_clean.groupby(['材料コード', '完成日']).agg({
-            '数量': 'sum',
-            '納入先': 'first'
-        }).reset_index()
+        df1 = df_clean.groupby(['材料コード', '完成日']).agg({'数量': 'sum', '納入先': 'first'}).reset_index()
         df1.columns = ['品番', '完成日', '数量', '納入先(参考)']
-
-        # --- Output 2: 協力企業納入予定表 (Partner-wise) ---
-        df2 = df_clean.groupby(['納入先', '完成日']).agg({
-            '材料コード': lambda x: ', '.join(x.unique()),
-            '数量': 'sum'
-        }).reset_index()
+        df2 = df_clean.groupby(['納入先', '完成日']).agg({'材料コード': lambda x: ', '.join(x.unique()), '数量': 'sum'}).reset_index()
         df2.columns = ['協力企業', '完成日', '品番(複数)', '数量合計']
-
-        # --- Output 3: 社内プレス入荷予定表 (Press - currently all items) ---
-        df3 = df_clean.groupby(['完成日']).agg({
-            '材料コード': lambda x: ', '.join(x.unique()),
-            '数量': 'sum'
-        }).reset_index()
+        df3 = df_clean.groupby(['完成日']).agg({'材料コード': lambda x: ', '.join(x.unique()), '数量': 'sum'}).reset_index()
         df3.columns = ['完成日', '品番(複数)', '数量合計']
-        df3.insert(0, 'プレス/シフト', '全プレス(仮)')   # Can be customized later
+        df3.insert(0, 'プレス/シフト', '全プレス(仮)')
 
-        st.success(f"✅ PDF parsed: {len(df_clean)} orders, {df2['協力企業'].nunique()} unique partners detected.")
+        st.success(f"✅ PDF parsed: {len(df_clean)} orders, {df2['協力企業'].nunique()} unique partners.")
 
     elif has_dates:
-        # --- Case 2: Excel '+29' format (no partner column) ---
-        # Columns: ['品番', '07/13', '07/14', '07/15', '07/16', '07/17', '総数']
+        # --- কেস ২: Excel '+29' ফরম্যাট (এখন যেকোনো তারিখ চলবে) ---
+        # '総数' কলাম থাকলে ড্রপ করুন
         if '総数' in df.columns:
             df = df.drop(columns=['総数'])
-        df_melted = df.melt(id_vars=['品番'], var_name='完成日', value_name='数量')
+            
+        # '品番' কলামটি আইডি হিসেবে রাখুন
+        if '品番' not in df.columns:
+            st.error("❌ Excel-এ '品番' কলাম পাওয়া যায়নি।")
+            return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+
+        # Wide → Long ফরম্যাটে রূপান্তর (শুধু যেগুলো তারিখের কলাম)
+        df_melted = df.melt(
+            id_vars=['品番'], 
+            value_vars=date_cols,  # ← ডায়নামিক: যত রকম তারিখের কলাম আছে সব নেবে
+            var_name='完成日', 
+            value_name='数量'
+        )
         df_melted = df_melted[df_melted['数量'] > 0].dropna()
         df_melted['完成日'] = pd.to_datetime(df_melted['完成日'], format='%m/%d')
         df_melted.columns = ['品番', '完成日', '数量']
 
-        # --- Output 1: 材料別発注リスト ---
-        df1 = df_melted.groupby(['品番', '完成日']).agg({
-            '数量': 'sum'
-        }).reset_index()
+        # --- আউটপুট ১: 材料別発注リスト ---
+        df1 = df_melted.groupby(['品番', '完成日']).agg({'数量': 'sum'}).reset_index()
         df1.columns = ['品番', '完成日', '数量']
 
-        # --- Output 2: 協力企業納入予定表 (no partner, so we group by material code as a placeholder) ---
-        df2 = df_melted.groupby(['品番', '完成日']).agg({
-            '数量': 'sum'
-        }).reset_index()
+        # --- আউটপুট ২: 協力企業納入予定表 (Excel-এ '納入先' নেই, তাই '品番' কে প্লেসহোল্ডার ধরা) ---
+        df2 = df_melted.groupby(['品番', '完成日']).agg({'数量': 'sum'}).reset_index()
         df2.columns = ['協力企業(品番)', '完成日', '数量']
-        st.warning("⚠️ No '納入先' column in Excel. Using Material Code as Partner placeholder. Please edit manually or upload PDF for full partner list.")
+        st.warning("⚠️ Excel-এ '納入先' কলাম নেই। '品番' কে সহযোগী প্রতিষ্ঠানের জায়গায় দেখানো হচ্ছে।")
 
-        # --- Output 3: 社内プレス入荷予定表 ---
+        # --- আউটপুট ৩: 社内プレス入荷予定表 ---
         df3 = df_melted.groupby(['完成日']).agg({
             '品番': lambda x: ', '.join(x.unique()),
             '数量': 'sum'
@@ -102,11 +96,13 @@ def convert_data(input_df):
         df3.columns = ['完成日', '品番(複数)', '数量合計']
         df3.insert(0, 'プレス/シフト', '全プレス(Excel)')
 
+        st.success(f"✅ Excel processed! Total rows: {len(df_melted)}")
+
     else:
-        st.error("❌ Unrecognized data format. Please upload a PDF with '納入先' or an Excel '+29' sheet.")
+        st.error("❌ Unrecognized data format. Please upload a PDF with '納入先' or an Excel sheet with '品番' and date columns (like 07/13).")
         return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
-    # ---------- Format dates for Excel ----------
+    # ---------- 3. তারিখ ফরম্যাট করুন ----------
     for df_out in [df1, df2, df3]:
         if '完成日' in df_out.columns:
             df_out['完成日'] = df_out['完成日'].dt.strftime('%Y-%m-%d')
