@@ -70,6 +70,7 @@ def convert_data(input_df):
 
         # Safe date parser
         df_melted['完成日'] = pd.to_datetime(df_melted['完成日'], errors='coerce')
+
         df_melted = df_melted.dropna(subset=['完成日'])
 
         # Output 1
