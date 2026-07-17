@@ -1,0 +1,355 @@
+/* Modern Minimalist Streamlit Theme */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+* {
+    font-family: 'Space Grotesk', sans-serif;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg: #0a0a0a;
+    --card: #1a1a2e;
+    --border: #2d3748;
+    --primary: #1e3a8a;
+    --secondary: #3b82f6;
+    --accent: #60a5fa;
+    --text: #eaeaea;
+    --muted: #a0a0a0;
+    --success: #00b894;
+    --warning: #fdcb6e;
+}
+
+.stApp {
+    background: linear-gradient(145deg, #0a0a0a 0%, #1a1a2e 50%, #1e3a8a 100%);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+div[data-testid="stMainBlockContainer"] {
+    max-width: 1400px !important;
+    padding: 3rem 2rem !important;
+    margin: 0 auto !important;
+}
+
+.stMarkdown h1 {
+    font-size: 2.5rem !important;
+    font-weight: 700 !important;
+    color: var(--primary) !important;
+    letter-spacing: -0.5px;
+    margin-bottom: 1.5rem !important;
+    text-transform: uppercase;
+}
+
+/* Large Front Heading */
+.custom-title {
+    font-size: 3.5rem !important;
+    font-weight: 800 !important;
+    color: var(--text) !important;
+    letter-spacing: -1px;
+    margin-bottom: 2rem !important;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2 !important;
+    padding: 1rem 0;
+}
+
+.custom-sub {
+    font-size: 1.5rem !important;
+    font-weight: 500 !important;
+    color: var(--muted) !important;
+    margin-bottom: 1rem !important;
+    letter-spacing: 0.5px;
+}
+
+.stMarkdown h2 {
+    font-size: 1.8rem !important;
+    font-weight: 600 !important;
+    color: var(--text) !important;
+    margin-bottom: 1rem !important;
+    border-left: 4px solid var(--primary);
+    padding-left: 1rem !important;
+}
+
+.stMarkdown h3 {
+    font-size: 1.4rem !important;
+    font-weight: 500 !important;
+    color: var(--text) !important;
+    margin-bottom: 0.8rem !important;
+}
+
+.stMarkdown p {
+    color: var(--muted) !important;
+    line-height: 1.7 !important;
+    margin-bottom: 1rem !important;
+}
+
+.main-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.main-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+    border-color: var(--primary);
+}
+
+.stTabs [data-baseweb="tab-list"] {
+    display: flex;
+    gap: 0;
+    padding: 0;
+    border-radius: 8px;
+    background: transparent;
+    border-bottom: 2px solid var(--border);
+}
+
+.stTabs [data-baseweb="tab"] {
+    border-radius: 8px 8px 0 0 !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+    padding: 1rem 1.5rem !important;
+    background: transparent !important;
+    color: var(--muted) !important;
+    border: none !important;
+    margin-right: 0.5rem !important;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+    color: var(--text) !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+}
+
+.stTabs [aria-selected="true"] {
+    background: var(--primary) !important;
+    color: #fff !important;
+    box-shadow: none !important;
+}
+
+.stButton>button {
+    background: var(--primary) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    padding: 0.75rem 2rem !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.9rem !important;
+}
+
+.stButton>button:hover {
+    background: var(--secondary) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+}
+
+.stButton>button:active {
+    transform: translateY(0);
+}
+
+.stFileUploader>div {
+    border: 2px solid var(--border) !important;
+    background: var(--card) !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease;
+    padding: 2rem !important;
+}
+
+.stFileUploader>div:hover {
+    border-color: var(--primary) !important;
+    background: rgba(59, 130, 246, 0.05) !important;
+}
+
+.stDataFrame {
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    border: 1px solid var(--border) !important;
+    background: var(--card) !important;
+}
+
+.stDataFrame table {
+    border-collapse: collapse !important;
+}
+
+.stDataFrame th {
+    background: var(--accent) !important;
+    color: var(--text) !important;
+    font-weight: 600 !important;
+    padding: 1rem !important;
+}
+
+.stDataFrame td {
+    padding: 0.75rem 1rem !important;
+    border-bottom: 1px solid var(--border) !important;
+    color: var(--muted) !important;
+}
+
+.stAlert {
+    background: var(--card) !important;
+    border-radius: 8px !important;
+    border-left: 4px solid var(--primary) !important;
+    padding: 1.5rem !important;
+    margin: 1rem 0 !important;
+}
+
+.stTextInput>div>div>input,
+.stSelectbox>div>div>select,
+.stTextArea>div>div>textarea {
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 6px !important;
+    color: var(--text) !important;
+    padding: 0.75rem !important;
+    transition: all 0.3s ease !important;
+}
+
+.stTextInput>div>div>input:focus,
+.stSelectbox>div>div>select:focus,
+.stTextArea>div>div>textarea:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+    outline: none !important;
+}
+
+.stSlider>div>div>div {
+    background: var(--border) !important;
+}
+
+.stSlider>div>div>div>div {
+    background: var(--primary) !important;
+}
+
+.stCheckbox label {
+    color: var(--text) !important;
+    font-weight: 500 !important;
+}
+
+.stRadio>div {
+    gap: 0.5rem !important;
+}
+
+.stRadio>div>label {
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 6px !important;
+    padding: 0.75rem 1.5rem !important;
+    transition: all 0.3s ease !important;
+    color: var(--muted) !important;
+}
+
+.stRadio>div>label:hover {
+    border-color: var(--primary) !important;
+    color: var(--text) !important;
+}
+
+.stRadio>div>label[data-baseweb="radio-selected"] {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: #fff !important;
+}
+
+/* Navigation Items Spacing */
+.nav-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    padding: 1rem 0;
+}
+
+.nav-left {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.nav-middle {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.nav-right {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+}
+
+.nav-item {
+    padding: 0.75rem 1.5rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-weight: 500;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.nav-item:hover {
+    border-color: var(--primary);
+    background: rgba(59, 130, 246, 0.1);
+    transform: translateY(-2px);
+}
+
+.nav-item.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+/* Footer Styling */
+footer {
+    text-align: center !important;
+    padding: 2rem 0 !important;
+    margin-top: 3rem !important;
+}
+
+.stFooter {
+    text-align: center !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.footer-note {
+    text-align: center !important;
+    padding: 2rem 0 !important;
+    margin-top: 3rem !important;
+    color: var(--muted) !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.5px;
+}
