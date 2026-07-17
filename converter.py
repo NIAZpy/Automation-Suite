@@ -6,9 +6,7 @@ def convert_data(input_df):
 
     # ---------- Detect format ----------
     has_partner = '納入先' in df.columns
-
-    # Detect date columns (Cloud + Local)
-    has_dates = any('/' in str(col) or '-' in str(col) for col in df.columns)
+    has_dates = any('/' in str(col) or '-' in str(col) or str(col).isdigit() for col in df.columns)
 
     # ---------- Case 1: PDF (has 納入先) ----------
     if has_partner:
@@ -74,7 +72,16 @@ def convert_data(input_df):
         df_melted = df_melted[df_melted['数量'] > 0].dropna()
 
         # SAFE date parser (Cloud + Local)
-        df_melted['完成日'] = pd.to_datetime(df_melted['完成日'], errors='coerce')
+        def safe_date(x):
+            try:
+                return pd.to_datetime(x, errors='coerce')
+            except:
+                try:
+                    return pd.to_datetime(float(x), unit='d', origin='1899-12-30')
+                except:
+                    return pd.NaT
+
+        df_melted['完成日'] = df_melted['完成日'].apply(safe_date)
         df_melted = df_melted.dropna(subset=['完成日'])
 
         # Output 1
