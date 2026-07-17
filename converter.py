@@ -103,7 +103,7 @@ def convert_data(input_df):
         df3.insert(0, 'プレス/シフト', '全プレス(Excel)')
 
     else:
-        st.error("❌ Unrecognized data format. Please upload a PDF with '納入先' or an Excel '+29' sheet.")
+        st.info("ℹ️ '+29' format not detected. Trying flexible Excel processing...")
         return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
     # ---------- Format dates for Excel ----------
