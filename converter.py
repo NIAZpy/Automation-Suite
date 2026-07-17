@@ -6,7 +6,9 @@ def convert_data(input_df):
 
     # ---------- Detect format ----------
     has_partner = '納入先' in df.columns
-    has_dates = any('/' in str(col) for col in df.columns)
+
+    # Detect date columns (Cloud + Local)
+    has_dates = any('/' in str(col) or '-' in str(col) for col in df.columns)
 
     # ---------- Case 1: PDF (has 納入先) ----------
     if has_partner:
@@ -21,13 +23,18 @@ def convert_data(input_df):
 
         df_clean = df[[col_material, col_partner, col_date, col_qty]].copy()
         df_clean.columns = ['材料コード', '納入先', '完成日', '数量']
+
         df_clean['完成日'] = pd.to_datetime(df_clean['完成日'], errors='coerce')
         df_clean['数量'] = pd.to_numeric(df_clean['数量'], errors='coerce')
+
         df_clean = df_clean.dropna(subset=['数量'])
         df_clean = df_clean[df_clean['数量'] > 0]
 
         # Output 1
-        df1 = df_clean.groupby(['材料コード', '完成日']).agg({'数量': 'sum', '納入先': 'first'}).reset_index()
+        df1 = df_clean.groupby(['材料コード', '完成日']).agg({
+            '数量': 'sum',
+            '納入先': 'first'
+        }).reset_index()
         df1.columns = ['品番', '完成日', '数量', '納入先(参考)']
 
         # Output 2
@@ -43,12 +50,10 @@ def convert_data(input_df):
             '数量': 'sum'
         }).reset_index()
         df3.columns = ['完成日', '品番(複数)', '数量合計']
-        df3.insert(0, 'プレス/シフト', '全プレス(仮)')
+        df3.insert(0, 'プレス/シフト', '全プレス(PDF)')
 
-    # ---------- Case 2: Excel '+29' or similar ----------
+    # ---------- Case 2: Excel (+29 or any date columns) ----------
     elif has_dates:
-        if '総数' in df.columns:
-            df = df.drop(columns=['総数'])
 
         # Identify 品番 column
         id_col = None
@@ -57,9 +62,9 @@ def convert_data(input_df):
                 id_col = c
                 break
         if id_col is None:
-            id_col = df.columns[0]
+            id_col = df.columns[0]  # fallback
 
-        # All other columns are dates
+        # All other columns treated as dates
         value_cols = [c for c in df.columns if c != id_col]
 
         # Melt
@@ -68,9 +73,8 @@ def convert_data(input_df):
 
         df_melted = df_melted[df_melted['数量'] > 0].dropna()
 
-        # Safe date parser
+        # SAFE date parser (Cloud + Local)
         df_melted['完成日'] = pd.to_datetime(df_melted['完成日'], errors='coerce')
-
         df_melted = df_melted.dropna(subset=['完成日'])
 
         # Output 1
